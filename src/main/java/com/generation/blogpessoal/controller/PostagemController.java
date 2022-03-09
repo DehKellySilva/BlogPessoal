@@ -39,7 +39,6 @@ public class PostagemController {
 	public ResponseEntity<List<Postagem>> getAll(){
 		return ResponseEntity.ok(postagemRepository.findAll());
 		
-		/* select * from tb_postagens; */		
 	}
 	
 	@GetMapping("/{id}")
@@ -47,15 +46,6 @@ public class PostagemController {
 		return postagemRepository.findById(id)
 				.map(resposta -> ResponseEntity.ok(resposta))
 				.orElse(ResponseEntity.notFound().build());
-				
-		/* Optional <Postagem> resposta = postagemRepository.findById(id);
-		 * 
-		 * if ( resposta.isPresent()) {
-		 * 		return ResponseEntity.ok(resposta);
-		 * }else {
-		 * 		return ResponseEntity.notFound().build();
-		 * }
-		 */
 		
 	}
 	
@@ -70,25 +60,26 @@ public class PostagemController {
 			return ResponseEntity.status(HttpStatus.CREATED).body(postagemRepository.save(postagem));
 
 		return ResponseEntity.notFound().build();
-
 	}
 	@PutMapping
 	public ResponseEntity<Postagem> putPostagem(@Valid @RequestBody Postagem postagem) {
 		if(temaRepository.existsById(postagem.getTema().getId())) {
-			return postagemRepository.findById(postagem.getId()) 
-					.map(resposta -> ResponseEntity.status(HttpStatus.OK)
-					.body(postagemRepository.save(postagem))) 
-					.orElse(ResponseEntity.notFound().build()); 		} 
+			return postagemRepository.findById(postagem.getId()) // procura pelo id
+					.map(resposta -> ResponseEntity.status(HttpStatus.OK).body(postagemRepository.save(postagem))) 
+					.orElse(ResponseEntity.notFound().build()); 
+		} 
 			return ResponseEntity.notFound().build();
 
 	}
 	
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Object> deletePostagem(@PathVariable Long id) { // postagemRepository.deleteById(id);
-		return postagemRepository.findById(id).map(resposta -> {
-			postagemRepository.deleteById(id);
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-		})
-				.orElse(ResponseEntity.notFound().build());
+	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	public void deletePostagem(@PathVariable Long id) {
+		Optional<Postagem> postagem = postagemRepository.findById(id);
+		
+		if (postagem.isEmpty())
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		
+		postagemRepository.deleteById(id);
 	}
 }
